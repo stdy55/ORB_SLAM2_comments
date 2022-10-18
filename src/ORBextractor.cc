@@ -1043,6 +1043,8 @@ void ORBextractor::ComputeKeyPointsOctTree(
     allKeypoints.resize(nlevels);
 
 	//图像cell的尺寸，是个正方形，可以理解为边长in像素坐标
+    //为了保证提取关键点的均匀,作者将一张图片分为了30×30大小网格,在每个网格中提取关键点,并且在提取关键点时采用了非极大值抑制的方法.
+    //定义了网格的大小,实际大小会根据图片大小而定
     const float W = 30;
 
     // 对每一层图像做处理
@@ -1065,9 +1067,9 @@ void ORBextractor::ComputeKeyPointsOctTree(
         const float height = (maxBorderY-minBorderY);
 
 		//计算网格在当前层的图像有的行数和列数
-        const int nCols = width/W;
-        const int nRows = height/W;
-		//计算每个图像网格所占的像素行数和列数
+        const int nCols = width/W;      //网格列
+        const int nRows = height/W;     //网格行
+		//向上取整,大于该值的最小整数，计算每个图像网格所占的像素行数和列数(宽和高)
         const int wCell = ceil(width/nCols);
         const int hCell = ceil(height/nRows);
 
@@ -1143,6 +1145,10 @@ void ORBextractor::ComputeKeyPointsOctTree(
             }//开始遍历图像cell的列
         }//开始遍历图像cell的行
 
+        //关键点已存放于 vToDistributeKeys 向量当中 (该坐标已经从对应网格中的坐标转换为整幅图像的坐标,但是不包含边缘空隙),
+        //并进行四叉树存储,然后分别在四叉树的每个节点筛选出最高质量关键点
+        //===================================================================
+        
         //声明一个对当前图层的特征点的容器的引用
         vector<KeyPoint> & keypoints = allKeypoints[level];
 		//并且调整其大小为欲提取出来的特征点个数（当然这里也是扩大了的，因为不可能所有的特征点都是在这一个图层中提取出来的）
